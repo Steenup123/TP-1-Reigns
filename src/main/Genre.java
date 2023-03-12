@@ -1,4 +1,4 @@
-package com.fges.tp_solid.reigns.Personnage;
+package main;
 
 public enum Genre {
     ROI, REINE;
