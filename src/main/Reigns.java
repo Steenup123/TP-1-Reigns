@@ -3,94 +3,86 @@ package main;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-/**
- * La classe Reigns représente le programme principal du jeu Reigns
- *
- * @author Julie Jacques / Lucien Mousin
- * @version 1.0
- */
-public class Reigns {
-    /**
-     * le personnage joué
-     */
-    private static Personnage personnage;
+package reigns.Jeu;
 
-    /**
-     * la banque de questions
-     */
-    private static ArrayList<Question> questions;
+import reigns.Condition.Conditions;
+import reigns.Condition.GestionCondition;
+import reigns.Condition.TypeCondition;
+import reigns.Effet.Effets;
+import reigns.Effet.GestionEffet;
+import reigns.Jauges.Jauge;
+import reigns.Jauges.TypeJauge;
+import reigns.Personnage.Genre;
+import reigns.Personnage.Personnage;
+import reigns.Question.GestionQuestion;
+import reigns.Question.Questions;
 
-    /**
-     * La méthode main lance le jeu Reigns. Il initialise les questions, le personnage,
-     * affiche les jauges du personnage et lance une boucle de jeu qui se termine lorsque le personnage perd.
-     * Il affiche également le nombre de tours de jeu que le personnage a joué.
-     *
-     * @param args les arguments de la ligne de commande
-     */
-    public static void main(String[] args){
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Scanner;
 
-        // début du jeu
-        System.out.println("Bienvenue sur Reigns");
+import static reigns.Personnage.Genre.REINE;
+import static reigns.Personnage.Genre.ROI;
 
+public class Jeu {
+
+    protected static Personnage personnage;
+    protected static Questions questions;
+    protected static boolean hasGotActive;
+
+    public void InitJeu() {
         initBanqueQuestions();
-
         System.out.println("Création du personnage...");
-
         initPersonnage();
-
         System.out.println(personnage.getGenre().longRegne()
-                +" "+personnage.getNom());
+                + " " + personnage.getNom());
 
         personnage.AfficheJauges();
-
-        // tirage des questions
+        hasGotActive = false;
+        //Gestion Jeu
         int nbTours = 0;
-        while(!personnage.finDuJeu()){
-            nbTours++;
-            Question question = getQuestionAleatoire();
-            reponseQuestion(question);
-            personnage.AfficheJauges();
-        }
+        gestionJeu(nbTours);
+
 
         // fin du jeu
         System.out.println(
                 personnage.getNom()
                         + " a perdu ! Son règne a duré "
-                        +nbTours
+                        + nbTours
                         + " tours");
 
     }
+    protected void gestionJeu(int nbTours){
+        while (!hasFinDuJeu()) {
+            nbTours++;
+            GestionQuestion question = questions.getQuestion(personnage);
+            reponseQuestion(question);
+            personnage.AfficheJauges();
+        }
+    }
 
-    /**
-     * Cette fonction permet de gérer la réponse à une question donnée. Elle affiche la question, demande à
-     * l'utilisateur d'entrer une réponse (soit "G" soit "D") et en fonction de la réponse, elle appelle la méthode
-     * appropriée pour appliquer les conséquences sur les jauges du personnage.
-     * @param question La question à laquelle il faut répondre
-     */
-    private static void reponseQuestion(Question question){
-        question.afficheQuestion();
+    protected static void reponseQuestion(GestionQuestion question) {
+        question.afficheQuestion(hasGotActive);
         // récupère la réponse
         Scanner scanner = new Scanner(System.in);
         String reponse = "";
-        while(!reponse.equals("G") && !reponse.equals("D")){
+        while (!reponse.equals("G") && !reponse.equals("D")) {
             System.out.println("Entrez la réponse (G ou D)");
             System.out.flush();
             reponse = scanner.nextLine();
         }
         // applique les malus
-        if(reponse.equals("G")){
-            question.appliqueEffetsGauche(personnage);
-        }else{
-            question.appliqueEffetsDroite(personnage);
+        if (reponse.equals("G")) {
+            question.getEffetJaugeGauche().appliquerEffets(personnage, hasGotActive);
+        } else {
+            question.getEffetJaugeDroite().appliquerEffets(personnage, hasGotActive);
         }
     }
 
-    /**
-     * Cette fonction permet d'initialiser le personnage joué. Elle demande à l'utilisateur de saisir le nom du personnage
-     * et le genre (Roi ou Reine). Elle crée ensuite le personnage.
-     */
+    //INIT JEU
 
-    private static void initPersonnage(){
+
+    private static void initPersonnage() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Entrez le nom du personnage: ");
         System.out.flush();
@@ -98,76 +90,127 @@ public class Reigns {
         System.out.println(
                 "Faut-il vous appeler Roi ou Reine ? (1 pour Roi, 2 pour Reine)");
         int genre = scanner.nextInt();
-        Genre roiReine;
-        if(genre==1){
-            roiReine = Genre.ROI;
-        }else{
-            roiReine = Genre.REINE;
+        Genre genrePersonnage;
+        if (genre == 1) {
+            genrePersonnage = ROI;
+        } else {
+            genrePersonnage = REINE;
         }
-
-        Reigns.personnage = new Personnage(nom,roiReine);
+        HashMap<String, Jauge> jauges = initJauge();
+        Jeu.personnage = new Personnage(nom, genrePersonnage, jauges);
     }
 
-    /**
-     * Cette fonction initialise la banque de questions. Elle crée les questions et les ajoute à la banque.
-     */
-    private static void initBanqueQuestions(){
-        questions = new ArrayList<>();
-        Question question1 = new Question(
+    private static HashMap<String, Jauge> initJauge() {
+        HashMap<String, Jauge> jauges = new HashMap<>();
+        jauges.put("Clerge", new Jauge(TypeJauge.CLERGE));
+        jauges.put("Peuple", new Jauge(TypeJauge.PEUPLE));
+        jauges.put("Armee", new Jauge(TypeJauge.ARMEE));
+        jauges.put("Finance", new Jauge(TypeJauge.FINANCE));
+        return jauges;
+    }
+
+    private static void initBanqueQuestions() {
+        ArrayList<GestionQuestion> questionsBanque = new ArrayList<>();
+        GestionQuestion question1 = new GestionQuestion(
                 "Main du roi",
                 "Le peuple souhaite libérer les prisonniers",
                 "Oui",
-                "Non");
-        question1.ajouteEffetGauche(TypeJauge.ARMEE, -5);
-        question1.ajouteEffetGauche(TypeJauge.PEUPLE, +5);
-        question1.ajouteEffetDroite(TypeJauge.PEUPLE, -7);
-        questions.add(question1);
-        Question question2 = new Question(
+                "Non",
+                new Effets(),
+                new Effets(),
+                new Conditions());
+        question1.ajouteEffetGauche(new GestionEffet(TypeJauge.ARMEE, -5));
+        question1.ajouteEffetGauche(new GestionEffet(TypeJauge.PEUPLE, +5));
+        question1.ajouteEffetDroite(new GestionEffet(TypeJauge.PEUPLE, -7));
+        questionsBanque.add(question1);
+        GestionQuestion question2 = new GestionQuestion(
                 "Paysan",
                 "Il n'y a plus rien à manger",
                 "Importer de la nourriture",
-                "Ne rien faire");
-        question2.ajouteEffetGauche(TypeJauge.FINANCE,-5);
-        question2.ajouteEffetGauche(TypeJauge.PEUPLE, +5);
-        question2.ajouteEffetDroite(TypeJauge.PEUPLE, -5);
-        questions.add(question2);
-        Question question3 = new Question(
+                "Ne rien faire",
+                new Effets(),
+                new Effets(),
+                new Conditions());
+        question2.ajouteEffetGauche(new GestionEffet(TypeJauge.FINANCE, -5));
+        question2.ajouteEffetGauche(new GestionEffet(TypeJauge.PEUPLE, +5));
+        question2.ajouteEffetDroite(new GestionEffet(TypeJauge.PEUPLE, -5));
+        questionsBanque.add(question2);
+        GestionQuestion question3 = new GestionQuestion(
                 "Prêtre",
                 "Les dieux sont en colère",
                 "Faire un sacrifice",
-                "Ne rien faire");
-        question3.ajouteEffetGauche(TypeJauge.CLERGE, +5);
-        question3.ajouteEffetGauche(TypeJauge.PEUPLE, -3);
-        question3.ajouteEffetDroite(TypeJauge.CLERGE, -5);
-        questions.add(question3);
-        Question question4 = new Question(
+                "Ne rien faire",
+                new Effets(),
+                new Effets(),
+                new Conditions());
+        question3.ajouteEffetGauche(new GestionEffet(TypeJauge.CLERGE, +5));
+        question3.ajouteEffetGauche(new GestionEffet(TypeJauge.PEUPLE, -3));
+        question3.ajouteEffetDroite(new GestionEffet(TypeJauge.CLERGE, -5));
+        questionsBanque.add(question3);
+        GestionQuestion question4 = new GestionQuestion(
                 "Main du roi",
                 "Le roi Baratheon rassemble son armée",
                 "Le soutenir",
-                "Rester neutre");
-        question4.ajouteEffetGauche(TypeJauge.ARMEE, +3);
-        question4.ajouteEffetGauche(TypeJauge.FINANCE, -3);
-        question4.ajouteEffetGauche(TypeJauge.CLERGE, -3);
-        question4.ajouteEffetDroite(TypeJauge.PEUPLE, +3);
-        questions.add(question4);
-        Question question5 = new Question(
+                "Rester neutre",
+                new Effets(),
+                new Effets(),
+                new Conditions());
+        question4.ajouteEffetGauche(new GestionEffet(TypeJauge.ARMEE, +3));
+        question4.ajouteEffetGauche(new GestionEffet(TypeJauge.FINANCE, -3));
+        question4.ajouteEffetGauche(new GestionEffet(TypeJauge.CLERGE, -3));
+        question4.ajouteEffetDroite(new GestionEffet(TypeJauge.PEUPLE, +3));
+        questionsBanque.add(question4);
+        GestionQuestion question5 = new GestionQuestion(
                 "Paysan",
                 "Abondance de récoltes cette année",
                 "Taxer énormément",
-                "Taxer un tout petit peu");
-        question5.ajouteEffetGauche(TypeJauge.FINANCE, +10);
-        question5.ajouteEffetGauche(TypeJauge.PEUPLE, -5);
-        question5.ajouteEffetDroite(TypeJauge.FINANCE, +1);
-        question5.ajouteEffetDroite(TypeJauge.PEUPLE, -3);
-        questions.add(question5);
+                "Taxer un tout petit peu",
+                new Effets(),
+                new Effets(),
+                new Conditions());
+        question5.ajouteEffetGauche(new GestionEffet(TypeJauge.FINANCE, +10));
+        question5.ajouteEffetGauche(new GestionEffet(TypeJauge.PEUPLE, -5));
+        question5.ajouteEffetDroite(new GestionEffet(TypeJauge.FINANCE, +1));
+        question5.ajouteEffetDroite(new GestionEffet(TypeJauge.PEUPLE, -3));
+        questionsBanque.add(question5);
+        GestionQuestion question6 = new GestionQuestion(
+                "Main du roi",
+                "Les caisses sont vides...",
+                "Augmenter les taxes",
+                "Emprunter",
+                new Effets(),
+                new Effets(),
+                new Conditions());
+        question6.ajouteEffetGauche(new GestionEffet(TypeJauge.FINANCE, +10));
+        question6.ajouteEffetGauche(new GestionEffet(TypeJauge.PEUPLE, -5));
+        question6.ajouteEffetDroite(new GestionEffet(TypeJauge.FINANCE, +7));
+        question6.ajouteEffetDroite(new GestionEffet(TypeJauge.PEUPLE, -3));
+        question6.ajouteCondition(new GestionCondition(TypeJauge.PEUPLE, 10, TypeCondition.INFERIEUR));
+        questionsBanque.add(question6);
+        GestionQuestion question7 = new GestionQuestion(
+                "Prêtre",
+                "J'aimerai qu'on nous considère en tant que tel",
+                "Construire un monastère",
+                "Ecouter sans rien faire",
+                new Effets(),
+                new Effets(),
+                new Conditions());
+        question7.ajouteEffetGauche(new GestionEffet(TypeJauge.CLERGE, +5));
+        question7.ajouteEffetGauche(new GestionEffet(TypeJauge.FINANCE, -5));
+        question7.ajouteEffetDroite(new GestionEffet(TypeJauge.CLERGE, -5));
+        question7.ajouteCondition(new GestionCondition(TypeJauge.CLERGE, 10, TypeCondition.INFERIEUR));
+        question7.ajouteCondition(new GestionCondition(TypeJauge.FINANCE, 30, TypeCondition.SUPPERIEUR));
+        questionsBanque.add(question7);
+        questions = new Questions(questionsBanque);
     }
 
-    /**
-     * Cette fonction permet de tirer une question aléatoire dans la banque de questions.
-     * @return Une question aléatoire
-     */
-    private static Question getQuestionAleatoire(){
-        int numQuestion = (int) (Math.random()*questions.size());
-        return questions.get(numQuestion);
+    //FIN JEU
+
+    protected static boolean hasFinDuJeu() {
+        for (HashMap.Entry<String, Jauge> jauge : Jeu.personnage.getJauges().entrySet()) {
+            if (jauge.getValue().hasJaugePleine())
+                return true;
+        }
+        return false;
     }
 }
