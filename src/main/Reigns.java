@@ -8,8 +8,6 @@ package reigns.Jeu;
 import reigns.Condition.Conditions;
 import reigns.Condition.GestionCondition;
 import reigns.Condition.TypeCondition;
-import reigns.Effet.Effets;
-import reigns.Effet.GestionEffet;
 import reigns.Jauges.Jauge;
 import reigns.Jauges.TypeJauge;
 import reigns.Personnage.Genre;
