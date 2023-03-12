@@ -1,87 +1,49 @@
 package main;
 
-/**
- * Représente une jauge avec un nom, une valeur et un type.
- *
- * @author Julie Jacques / Lucien Mousin
- * @version 1.0
- */
 public class Jauge {
-    /**
-     * Le type de la jauge
-     */
+
     protected TypeJauge type;
-    /**
-     * Le nom de la jauge
-     */
-    protected String nom;
-    /**
-     * La valeur de la jauge
-     */
     protected int valeur;
 
-    /**
-     * Crée une nouvelle jauge avec le nom et la valeur spécifiés.
-     *
-     * @param nom Le nom de la jauge
-     * @param valeur La valeur de la jauge
-     */
-    public Jauge(String nom, int valeur){
-        this.nom = nom;
-        this.valeur = valeur;
+    public Jauge(TypeJauge type) {
+        this.type = type;
+        this.valeur = (int) (15 + Math.random() * (35 - 15));
     }
 
-    /**
-     * Retourne le nom de la jauge.
-     *
-     * @return le nom de la jauge
-     */
-    public String getNom() {
-        return nom;
+    public void afficheJauge() {
+        String resultat = "[";
+        // valeur : ####
+        for (int i = 0; i < getValeur(); i++) {
+            resultat += "#";
+        }
+        // on complète avec ____
+        for (int i = 0; i < 50 - (getValeur() > 0 ? getValeur() : 0); i++) {
+            resultat += "_";
+        }
+        resultat += "]  ";
+        // affichage du nom
+        resultat += getType().toString();
+        System.out.println(resultat);
     }
 
-    /**
-     * Modifie le nom de la jauge.
-     *
-     * @param nom Le nouveau nom de la jauge
-     */
-    public void setNom(String nom) {
-        this.nom = nom;
+    public boolean hasJaugePleine() {
+        return getValeur() >= 50 || getValeur() <= 0;
     }
 
-    /**
-     * Retourne la valeur de la jauge.
-     *
-     * @return la valeur de la jauge
-     */
+    public void changementValeur(int effetAppliquer) {
+        this.setValeur(getValeur() + effetAppliquer);
+    }
+
     public int getValeur() {
         return valeur;
     }
 
-    /**
-     * Modifie la valeur de la jauge.
-     *
-     * @param valeur La nouvelle valeur de la jauge
-     */
     public void setValeur(int valeur) {
         this.valeur = valeur;
     }
 
-    /**
-     * Retourne le type de la jauge.
-     *
-     * @return le type de la jauge
-     */
     public TypeJauge getType() {
         return type;
     }
 
-    /**
-     * Modifie le type de la jauge.
-     *
-     * @param type Le nouveau type de la jauge
-     */
-    public void setType(TypeJauge type) {
-        this.type = type;
-    }
 }
