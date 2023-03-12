@@ -1,4 +1,4 @@
-package com.fges.tp_solid.reigns.Question;
+package main;
 
 
 import com.fges.tp_solid.reigns.Condition.Conditions;
