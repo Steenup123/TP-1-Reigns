@@ -1,6 +1,6 @@
 package main;
 
-import com.fges.tp_solid.reigns.Jauges.Jauge;
+import reigns.Jauges.Jauge;
 
 import java.util.HashMap;
 
